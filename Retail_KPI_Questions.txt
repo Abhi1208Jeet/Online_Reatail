@@ -1,0 +1,184 @@
+================================================================================
+                 SQL PROJECT CASE STUDY: CORE RETAIL KPIs & METRICS
+                     Dataset Focus: Online Retail Transactions
+================================================================================
+
+This file contains the foundational business performance questions, standard MySQL 
+queries, and accurate dataset output metrics extracted directly from the 
+`online_retail1.csv` database table.
+
+--------------------------------------------------------------------------------
+PROBLEM 1: TOTAL REVENUE
+--------------------------------------------------------------------------------
+Description:
+Calculate the net realized revenue across all historical transactions on the platform, 
+balancing completed orders alongside value reductions caused by cancellations.
+
+MySQL Query:
+SELECT SUM(Quantity * UnitPrice) AS Total_Revenue 
+FROM online_retail;
+
+Dataset Result:
+- Total_Revenue: $37,811.22
+
+--------------------------------------------------------------------------------
+PROBLEM 2: TOP 10 REVENUE GENERATING PRODUCTS
+--------------------------------------------------------------------------------
+Description:
+Identify the top 10 catalog entries that have driven the highest gross financial returns.
+
+MySQL Query:
+SELECT Description, SUM(Quantity * UnitPrice) AS Revenue
+FROM online_retail
+GROUP BY Description
+ORDER BY Revenue DESC
+LIMIT 10;
+
+Dataset Result:
+1. BLACK RECORD COVER FRAME              ($1,627.20)
+2. REGENCY CAKESTAND 3 TIER               ($811.50)
+3. CHILLI LIGHTS                          ($783.21)
+4. PAPER CHAIN KIT 50'S CHRISTMAS         ($755.18)
+5. WOODEN OWLS LIGHT GARLAND              ($647.04)
+6. LIGHT GARLAND BUTTERFILES PINK         ($647.04)
+7. FAIRY TALE COTTAGE NIGHTLIGHT          ($638.10)
+8. RED TOADSTOOL LED NIGHT LIGHT          ($611.25)
+9. DOTCOM POSTAGE                         ($569.77)
+10. WHITE HANGING HEART T-LIGHT HOLDER     ($482.79)
+
+--------------------------------------------------------------------------------
+PROBLEM 3: TOP SELLING PRODUCTS BY QUANTITY
+--------------------------------------------------------------------------------
+Description:
+Rank the top 10 products based strictly on the aggregate physical volume of units sold.
+
+MySQL Query:
+SELECT Description, SUM(Quantity) AS Total_Quantity
+FROM online_retail
+GROUP BY Description
+ORDER BY Total_Quantity DESC
+LIMIT 10;
+
+Dataset Result:
+1. NAMASTE SWAGAT INCENSE             (600 units)
+2. BLACK RECORD COVER FRAME           (480 units)
+3. RED TOADSTOOL LED NIGHT LIGHT      (470 units)
+4. FAIRY TALE COTTAGE NIGHTLIGHT      (438 units)
+5. DISCO BALL CHRISTMAS DECORATION    (314 units)
+6. JUMBO BAG RED RETROSPOT            (255 units)
+7. PAPER CHAIN KIT 50'S CHRISTMAS     (250 units)
+8. HAND WARMER SCOTTY DOG DESIGN      (232 units)
+9. SMALL POPCORN HOLDER               (231 units)
+10. PACK OF 72 RETROSPOT CAKE CASES    (229 units)
+
+--------------------------------------------------------------------------------
+PROBLEM 4: REVENUE BY COUNTRY
+--------------------------------------------------------------------------------
+Description:
+Examine the geographical macro-distribution of sales performance across different nations.
+
+MySQL Query:
+SELECT Country, SUM(Quantity * UnitPrice) AS Total_Revenue
+FROM online_retail
+GROUP BY Country
+ORDER BY Total_Revenue DESC;
+
+Dataset Result:
+- United Kingdom: $33,790.81
+- Norway:         $1,919.14
+- France:         $855.86
+- EIRE:           $555.38
+- Australia:      $358.25
+- Netherlands:    $192.60
+- Germany:        $139.18
+
+--------------------------------------------------------------------------------
+PROBLEM 5: TOP CUSTOMERS
+--------------------------------------------------------------------------------
+Description:
+Extract a client leaderboard ranking the top 10 high-value spenders (ignoring anonymous entries).
+
+MySQL Query:
+SELECT CustomerID, SUM(Quantity * UnitPrice) AS Total_Spent
+FROM online_retail
+WHERE CustomerID IS NOT NULL
+GROUP BY CustomerID
+ORDER BY Total_Spent DESC
+LIMIT 10;
+
+Dataset Result:
+1. Customer ID 16029.0   ($3,702.12)
+2. Customer ID 16210.0   ($2,474.74)
+3. Customer ID 12433.0   ($1,919.14)
+4. Customer ID 17511.0   ($1,825.74)
+5. Customer ID 17850.0   ($1,499.34)
+6. Customer ID 13408.0   ($1,024.68)
+7. Customer ID 15485.0   ($950.09)
+8. Customer ID 12583.0   ($855.86)
+9. Customer ID 13694.0   ($842.12)
+10. Customer ID 16456.0   ($787.40)
+
+--------------------------------------------------------------------------------
+PROBLEM 6: MONTHLY SALES TREND
+--------------------------------------------------------------------------------
+Description:
+Analyze chronological performance trends over historical months by transforming data types.
+
+MySQL Query:
+SELECT 
+    DATE_FORMAT(STR_TO_DATE(InvoiceDate, '%d-%m-%Y %H:%i'), '%Y-%m') AS Sales_Month,
+    SUM(Quantity * UnitPrice) AS Monthly_Revenue
+FROM online_retail
+GROUP BY Sales_Month
+ORDER BY Sales_Month;
+
+Dataset Result:
+- 2010-12 (December 2010): $37,811.22
+
+--------------------------------------------------------------------------------
+PROBLEM 7: AVERAGE ORDER VALUE (AOV)
+--------------------------------------------------------------------------------
+Description:
+Determine the mean currency expenditure generated per active, successful invoice.
+
+MySQL Query:
+SELECT SUM(Quantity * UnitPrice) / COUNT(DISTINCT InvoiceNo) AS Average_Order_Value
+FROM online_retail
+WHERE Quantity > 0;
+
+Dataset Result:
+- Average_Order_Value: $419.08
+
+--------------------------------------------------------------------------------
+PROBLEM 8: TOP 5 PRODUCTS IN EACH COUNTRY
+--------------------------------------------------------------------------------
+Description:
+Utilize analytical partition ranking window functions to extract the top 5 high-earning items
+specifically within each sovereign territory.
+
+MySQL Query:
+WITH RankedProducts AS (
+    SELECT 
+        Country, 
+        Description, 
+        SUM(Quantity * UnitPrice) AS Revenue,
+        ROW_NUMBER() OVER (PARTITION BY Country ORDER BY SUM(Quantity * UnitPrice) DESC) AS Rank_Position
+    FROM online_retail
+    GROUP BY Country, Description
+)
+SELECT Country, Description, Revenue, Rank_Position
+FROM RankedProducts
+WHERE Rank_Position <= 5;
+
+Dataset Result Summary:
+- Australia:      Top item is 'CHRISTMAS LIGHTS 10 REINDEER' ($51.00)
+- France:         Top item is 'ALARM CLOCK BAKELIKE PINK' ($90.00)
+- Germany:        Top item is '5 HOOK HANGER RED MAGIC TOADSTOOL' ($19.80)
+- Netherlands:    Top item is 'HAND WARMER BIRD DESIGN' ($177.60)
+- Norway:         Top item is 'GROW YOUR OWN PLANT IN A CAN' ($101.76)
+- EIRE:           Top item is 'BOX OF VINTAGE ALPHABET BLOCKS' ($59.70)
+- United Kingdom: Top item is 'BLACK RECORD COVER FRAME' ($1,627.20)
+
+================================================================================
+                        [END OF KPI REPORTING FILE]
+================================================================================
